@@ -4,6 +4,7 @@
  */
 package servicio;
 import dao.UsuarioDAO;
+import java.util.List;
 import modelo.Usuario;
 /**
  *
