@@ -35,7 +35,7 @@ public class TareaDAO {
                 t.setEstado(rs.getString("estado"));
                 t.setPrioridad(rs.getString("prioridad"));
                 t.setIdProyecto(rs.getInt("idProyecto"));
-                t.setIdUsuario(rs.getInt("id_usuario"));
+                t.setIdUsuario(rs.getInt("idUsuario"));
 
                 lista.add(t);
             }
@@ -48,7 +48,8 @@ public class TareaDAO {
     }
 
     public boolean agregarTarea(Tarea t) {
-        String sql = "INSERT INTO tareas (nombre, descripcion, fechainicio, fechaFin, estado, prioridad, idProyecto, id_usuario) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO tareas (nombre, descripcion, fechainicio, fechaFin, estado, prioridad, idProyecto, idUsuario) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+
 
         try (Connection con = ConexionDB.conectar();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -86,7 +87,7 @@ public class TareaDAO {
     }
 
     public boolean actualizarTarea(Tarea t) {
-        String sql = "UPDATE tareas SET nombre=?, descripcion=?, fechainicio=?, fechaFin=?, estado=?, prioridad=?, idProyecto=?, id_usuario=? WHERE id=?";
+        String sql = "UPDATE tareas SET nombre=?, descripcion=?, fechainicio=?, fechaFin=?, estado=?, prioridad=?, idProyecto=?, idUsuario=? WHERE id=?";
 
         try (Connection con = ConexionDB.conectar();
              PreparedStatement ps = con.prepareStatement(sql)) {

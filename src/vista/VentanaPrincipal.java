@@ -909,28 +909,38 @@ private void cargarTablaTareas() {
     }//GEN-LAST:event_btnActualizarTareasActionPerformed
 
     private void tablaTareasMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tablaTareasMouseClicked
-     int fila = tablaTareas.getSelectedRow();
+    int fila = tablaTareas.getSelectedRow();
 
     if (fila != -1) {
-        // Cargar los campos de texto
-        txtNombreTarea.setText(tablaTareas.getValueAt(fila, 1).toString());
-        txtDescripcionTarea.setText(tablaTareas.getValueAt(fila, 2).toString());
-        txtFechaInicioTarea.setText(tablaTareas.getValueAt(fila, 3).toString());
-        txtFechaFinTarea.setText(tablaTareas.getValueAt(fila, 4).toString());
-        
-        // Leer los valores de Prioridad y Estado directamente desde la tabla
-        int prioridadSeleccionada = Integer.parseInt(tablaTareas.getValueAt(fila, 6).toString());  // Columna de Prioridad
-        int estadoSeleccionado = Integer.parseInt(tablaTareas.getValueAt(fila, 5).toString());     // Columna de Estado
-        
-        // Seleccionar el valor en los ComboBox
-        comboPrioridadTarea.setSelectedIndex(prioridadSeleccionada);
+        // Cargar campos de texto con protección contra null
+        Object nombreObj = tablaTareas.getValueAt(fila, 1);
+        txtNombreTarea.setText(nombreObj != null ? nombreObj.toString() : "");
+
+        Object descripcionObj = tablaTareas.getValueAt(fila, 2);
+        txtDescripcionTarea.setText(descripcionObj != null ? descripcionObj.toString() : "");
+
+        Object fechaInicioObj = tablaTareas.getValueAt(fila, 3);
+        txtFechaInicioTarea.setText(fechaInicioObj != null ? fechaInicioObj.toString() : "");
+
+        Object fechaFinObj = tablaTareas.getValueAt(fila, 4);
+        txtFechaFinTarea.setText(fechaFinObj != null ? fechaFinObj.toString() : "");
+
+        // Estado y Prioridad
+        Object estadoObj = tablaTareas.getValueAt(fila, 5);
+        int estadoSeleccionado = estadoObj != null ? Integer.parseInt(estadoObj.toString()) : 0;
         comboEstadoTarea.setSelectedIndex(estadoSeleccionado);
 
-        // ID de proyecto y usuario desde la tabla
-        int idProyectoTabla = Integer.parseInt(tablaTareas.getValueAt(fila, 7).toString());
-        int idUsuarioTabla = Integer.parseInt(tablaTareas.getValueAt(fila, 8).toString());
+        Object prioridadObj = tablaTareas.getValueAt(fila, 6);
+        int prioridadSeleccionada = prioridadObj != null ? Integer.parseInt(prioridadObj.toString()) : 0;
+        comboPrioridadTarea.setSelectedIndex(prioridadSeleccionada);
 
-        // Buscar el nombre de ese proyecto en la lista y seleccionarlo en el combo
+        // Proyecto y Usuario
+        Object idProyectoObj = tablaTareas.getValueAt(fila, 7);
+        int idProyectoTabla = idProyectoObj != null ? Integer.parseInt(idProyectoObj.toString()) : -1;
+
+        Object idUsuarioObj = tablaTareas.getValueAt(fila, 8);
+        int idUsuarioTabla = idUsuarioObj != null ? Integer.parseInt(idUsuarioObj.toString()) : -1;
+
         for (Proyecto p : listaProyectos) {
             if (p.getId() == idProyectoTabla) {
                 comboProyecto.setSelectedItem(p.getNombre());
@@ -938,7 +948,6 @@ private void cargarTablaTareas() {
             }
         }
 
-        // Buscar el nombre del usuario y seleccionarlo en el combo
         for (Usuario u : listaUsuarios) {
             if (u.getId() == idUsuarioTabla) {
                 comboUsuario.setSelectedItem(u.getNombre());
