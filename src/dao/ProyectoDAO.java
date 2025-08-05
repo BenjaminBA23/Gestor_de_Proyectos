@@ -95,4 +95,13 @@ public class ProyectoDAO {
             return false;
         }
     }
+    
+    public Proyecto obtenerProyectoPorId(int id) {
+    Proyecto p = null;
+    String query = "SELECT * FROM proyectos WHERE id = ?";
+    
+    // Ejecutar la consulta y llenar el objeto Proyecto
+    // Asegúrate de tener los parámetros correctos aquí para que funcione la consulta SQL
+    return p;  // Retornar el proyecto con los datos obtenidos
+ }
 }

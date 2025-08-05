@@ -3,19 +3,236 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
 package vista;
+import modelo.Usuario;
+import servicio.UsuarioServicio;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.JOptionPane;
+import java.util.List;
+import modelo.Proyecto;
+import modelo.Tarea;
+import servicio.ProyectoServicio;
+import servicio.TareaServicio;
 
 /**
  *
  * @author Ben
  */
 public class VentanaPrincipal extends javax.swing.JFrame {
+private UsuarioServicio servicio = new UsuarioServicio();
+private DefaultTableModel modelo;
+private TareaServicio tareaServicio = new TareaServicio();
+private DefaultTableModel modeloTarea;
+private List<Usuario> listaUsuarios;
+private List<Proyecto> listaProyectos;
+private int filaSeleccionada = -1;
+private int idUsuarioSeleccionado = -1;
 
     /**
      * Creates new form VentanaPrincipal
      */
     public VentanaPrincipal() {
         initComponents();
+        cargarProyectosEnTabla();
+        cargarComboProyecto();      // si lo tienes
+        cargarUsuariosEnTabla();
+        cargarComboUsuario();         // si lo tienes
+        cargarUsuariosEnTabla();
+        cargarComboUsuario();       // si lo tienes
+        cargarComboProyecto();         // para tareas
+        cargarComboUsuario();          // para tareas
     }
+    
+    //cargar tabla pero para usuario
+    private void cargarUsuariosEnTabla() {
+    modelo = (DefaultTableModel) tablaUsuarios.getModel();
+    modelo.setRowCount(0); // limpia la tabla
+
+    List<Usuario> lista = servicio.listarUsuarios();
+
+    for (Usuario u : lista) {
+        modelo.addRow(new Object[]{
+            u.getId(), u.getNombre(), u.getCorreo()
+        });
+    }
+    }
+    //cagar tabla pero para tareas 
+private void cargarTablaTareas() {
+    DefaultTableModel modelo = (DefaultTableModel) tablaTareas.getModel();
+    modelo.setRowCount(0);  // Limpiar la tabla antes de llenarla
+
+    TareaServicio servicio = new TareaServicio();
+    List<Tarea> lista = servicio.listarTareas(); // Obtener lista de tareas
+
+    for (Tarea t : lista) {
+        modelo.addRow(new Object[]{
+            t.getId(), // ID de tarea
+            t.getNombre(), // Nombre de la tarea
+            t.getUsuarioNombre(),  // Nombre del usuario
+            t.getProyectoNombre(), // Nombre del proyecto
+            t.getDescripcion(), // Descripción
+            t.getFechaInicio(), // Fecha de inicio
+            t.getFechaFin(), // Fecha de fin
+            t.getEstado(), // Estado
+            t.getPrioridad() // Prioridad
+        });
+    }
+}
+  
+    
+    private void listarProyectos() {
+    ProyectoServicio servicio = new ProyectoServicio();
+    List<Proyecto> lista = servicio.listarProyectos();
+
+    DefaultTableModel modelo = new DefaultTableModel();
+    // Aquí es donde DEBES poner las columnas correctas
+    modelo.setColumnIdentifiers(new String[]{"ID", "Nombre", "Descripcion", "FechaInicio", "FechaFin"});
+
+    for (Proyecto p : lista) {
+        modelo.addRow(new Object[]{
+            p.getId(),
+            p.getNombre(),
+            p.getDescripcion(),
+            p.getFechaInicio(),
+            p.getFechaFin()
+        });
+    }
+
+    tablaProyectos.setModel(modelo); // Esto asigna el modelo a la tabla
+}
+    
+    //ahora para cargar el proyecto
+    private void cargarProyectosEnTabla() {
+    DefaultTableModel modelo = (DefaultTableModel) tablaProyectos.getModel();
+    modelo.setRowCount(0); // limpia tabla
+
+    ProyectoServicio servicio = new ProyectoServicio();
+    List<Proyecto> lista = servicio.listarProyectos();
+
+        for (Proyecto p : lista) {
+            modelo.addRow(new Object[]{
+                p.getId(), p.getNombre(), p.getDescripcion(), p.getFechaInicio(), p.getFechaFin()
+            });
+        }
+    }
+    
+    
+    
+    
+    private void cargarComboUsuario() {
+    comboUsuario.removeAllItems();
+    UsuarioServicio usuarioServicio = new UsuarioServicio();
+    listaUsuarios = usuarioServicio.listarUsuarios();
+
+    for (Usuario u : listaUsuarios) {
+        comboUsuario.addItem(u.getNombre());
+    }
+    }
+
+    private void cargarComboProyecto() {
+        comboProyecto.removeAllItems();
+        ProyectoServicio proyectoServicio = new ProyectoServicio();
+        listaProyectos = proyectoServicio.listarProyectos();
+
+        for (Proyecto p : listaProyectos) {
+            comboProyecto.addItem(p.getNombre());
+        }
+    }
+    //ediatar usuario
+    private void editarUsuario() {
+    int fila = tablaUsuarios.getSelectedRow();
+    if (fila != -1) {
+        txtNombreUsuario.setText(tablaUsuarios.getValueAt(fila, 1).toString());
+        txtCorreoUsuario.setText(tablaUsuarios.getValueAt(fila, 2).toString());
+    } else {
+        JOptionPane.showMessageDialog(this, "Selecciona un usuario para editar.");
+    }
+    }
+    //actualizar usuario
+    private void actualizarUsuario() {
+    int fila = tablaUsuarios.getSelectedRow();
+    if (fila != -1) {
+        try {
+            int id = Integer.parseInt(tablaUsuarios.getValueAt(fila, 0).toString());
+            String nombre = txtNombreUsuario.getText().trim();
+            String correo = txtCorreoUsuario.getText().trim();
+
+            if (nombre.isEmpty() || correo.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Debes llenar todos los campos.");
+                return;
+            }
+
+            Usuario u = new Usuario(id, nombre, correo);
+            UsuarioServicio servicio = new UsuarioServicio();
+            servicio.actualizarUsuario(u);
+
+            cargarUsuariosEnTabla();
+        cargarComboUsuario();
+            limpiarCamposUsuario();
+            JOptionPane.showMessageDialog(this, "Usuario actualizado correctamente.");
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Error al actualizar usuario.");
+        }
+    } else {
+        JOptionPane.showMessageDialog(this, "Selecciona una fila para actualizar.");
+    }
+}
+    
+    //limpiar usuario
+    private void limpiarCamposUsuario() {
+    txtNombreUsuario.setText("");
+    txtCorreoUsuario.setText("");
+    tablaUsuarios.clearSelection(); // Deselecciona cualquier fila seleccionada
+    }
+    //para limpiar campos en proyecto
+    private void limpiarCamposProyecto() {
+    txtNombreProyecto.setText("");
+    txtDescripcionProyecto.setText("");
+    txtInicioProyecto.setText("");
+    txtFinProyecto.setText("");
+    tablaProyectos.clearSelection();
+    }
+        
+    //limpiar para usuario
+    private void limpiarCampos() {
+    txtNombreUsuario.setText("");
+    txtCorreoUsuario.setText("");
+    tablaUsuarios.clearSelection();
+    }
+    
+    //limpiar pero tareas
+    private void limpiarCamposTarea() {
+    txtNombreTarea.setText("");
+    txtDescripcionTarea.setText("");
+    txtFechaInicioTarea.setText("");
+    txtFechaFinTarea.setText("");
+    comboEstadoTarea.setSelectedIndex(0);
+    comboPrioridadTarea.setSelectedIndex(0);
+    comboProyecto.setSelectedIndex(0);
+    tablaTareas.clearSelection();
+}
+    private boolean validarCamposProyecto() {
+    if (txtNombreProyecto.getText().trim().isEmpty()) {
+        JOptionPane.showMessageDialog(this, "El campo 'Nombre' es obligatorio.");
+        txtNombreProyecto.requestFocus();
+        return false;
+    }
+    if (txtDescripcionProyecto.getText().trim().isEmpty()) {
+        JOptionPane.showMessageDialog(this, "El campo 'Descripción' es obligatorio.");
+        txtDescripcionProyecto.requestFocus();
+        return false;
+    }
+    if (txtInicioProyecto.getText().trim().isEmpty()) {
+        JOptionPane.showMessageDialog(this, "La 'Fecha de Inicio' es obligatoria.");
+        txtInicioProyecto.requestFocus();
+        return false;
+    }
+    if (txtFinProyecto.getText().trim().isEmpty()) {
+        JOptionPane.showMessageDialog(this, "La 'Fecha de Fin' es obligatoria.");
+        txtFinProyecto.requestFocus();
+        return false;
+    }
+    return true;
+}
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -45,6 +262,18 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         tablaProyectos = new javax.swing.JTable();
         jLabel11 = new javax.swing.JLabel();
         txtFinProyecto = new javax.swing.JTextField();
+        jTabbedPane3 = new javax.swing.JTabbedPane();
+        jPanel3 = new javax.swing.JPanel();
+        jLabel12 = new javax.swing.JLabel();
+        jLabel13 = new javax.swing.JLabel();
+        btnAgregarUsuario = new javax.swing.JButton();
+        btnEditarUsuario = new javax.swing.JButton();
+        btnEliminarUsuario = new javax.swing.JButton();
+        txtNombreUsuario = new javax.swing.JTextField();
+        txtCorreoUsuario = new javax.swing.JTextField();
+        jScrollPane4 = new javax.swing.JScrollPane();
+        tablaUsuarios = new javax.swing.JTable();
+        ActualizarUsuario = new javax.swing.JButton();
         jTabbedPane2 = new javax.swing.JTabbedPane();
         jPanel2 = new javax.swing.JPanel();
         btnAgregarTarea = new javax.swing.JButton();
@@ -54,7 +283,6 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         jLabel1 = new javax.swing.JLabel();
         comboProyecto = new javax.swing.JComboBox<>();
         jLabel2 = new javax.swing.JLabel();
-        txtUsuarioTarea = new javax.swing.JTextField();
         jLabel3 = new javax.swing.JLabel();
         txtDescripcionTarea = new javax.swing.JTextField();
         jLabel4 = new javax.swing.JLabel();
@@ -67,17 +295,9 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         tablaTareas = new javax.swing.JTable();
         jLabel7 = new javax.swing.JLabel();
         comboPrioridadTarea = new javax.swing.JComboBox<>();
-        jTabbedPane3 = new javax.swing.JTabbedPane();
-        jPanel3 = new javax.swing.JPanel();
-        jLabel12 = new javax.swing.JLabel();
-        jLabel13 = new javax.swing.JLabel();
-        btnAgregarUsuario = new javax.swing.JButton();
-        btnEditarUsuario = new javax.swing.JButton();
-        btnEliminarUsuario = new javax.swing.JButton();
-        txtNombreUsuario = new javax.swing.JTextField();
-        txtCorreoUsuario = new javax.swing.JTextField();
-        jScrollPane4 = new javax.swing.JScrollPane();
-        tablaUsuarios = new javax.swing.JTable();
+        jLabel14 = new javax.swing.JLabel();
+        txtNombreTarea = new javax.swing.JTextField();
+        comboUsuario = new javax.swing.JComboBox<>();
 
         jTable1.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -102,12 +322,32 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         jLabel10.setText("Fecha Inicio:");
 
         btnAgregarProyecto.setText("Agregar");
+        btnAgregarProyecto.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnAgregarProyectoActionPerformed(evt);
+            }
+        });
 
         btnEditarProyecto.setText("Editar");
+        btnEditarProyecto.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnEditarProyectoActionPerformed(evt);
+            }
+        });
 
         btnEliminarProyecto.setText("Eliminar");
+        btnEliminarProyecto.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnEliminarProyectoActionPerformed(evt);
+            }
+        });
 
         btnActualizarProyecto.setText("Actualizar");
+        btnActualizarProyecto.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnActualizarProyectoActionPerformed(evt);
+            }
+        });
 
         txtDescripcionProyecto.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -117,15 +357,20 @@ public class VentanaPrincipal extends javax.swing.JFrame {
 
         tablaProyectos.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null}
+                {null, null, null, null, null},
+                {null, null, null, null, null},
+                {null, null, null, null, null},
+                {null, null, null, null, null}
             },
             new String [] {
-                "Title 1", "Title 2", "Title 3", "Title 4"
+                "ID", "Nombre", "Descripcion", "FechaInicio", "FechaFin"
             }
         ));
+        tablaProyectos.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                tablaProyectosMouseClicked(evt);
+            }
+        });
         jScrollPane3.setViewportView(tablaProyectos);
 
         jLabel11.setText("Fecha Fin:");
@@ -134,36 +379,35 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(jScrollPane3)
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(jLabel8)
-                        .addGap(18, 18, 18)
-                        .addComponent(txtNombreProyecto, javax.swing.GroupLayout.PREFERRED_SIZE, 165, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(jLabel9)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(txtDescripcionProyecto, javax.swing.GroupLayout.PREFERRED_SIZE, 358, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addComponent(txtInicioProyecto, javax.swing.GroupLayout.PREFERRED_SIZE, 154, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(jLabel8)
                                 .addGap(18, 18, 18)
-                                .addComponent(jLabel11, javax.swing.GroupLayout.PREFERRED_SIZE, 62, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(txtNombreProyecto, javax.swing.GroupLayout.PREFERRED_SIZE, 165, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addComponent(jLabel9)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(txtFinProyecto, javax.swing.GroupLayout.PREFERRED_SIZE, 95, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                    .addComponent(jLabel10, javax.swing.GroupLayout.PREFERRED_SIZE, 73, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(18, 18, 18)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(btnAgregarProyecto, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(btnEditarProyecto, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(btnActualizarProyecto, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 107, Short.MAX_VALUE)
-                    .addComponent(btnEliminarProyecto, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(txtDescripcionProyecto, javax.swing.GroupLayout.PREFERRED_SIZE, 358, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addGroup(jPanel1Layout.createSequentialGroup()
+                                        .addComponent(txtInicioProyecto, javax.swing.GroupLayout.PREFERRED_SIZE, 154, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addGap(18, 18, 18)
+                                        .addComponent(jLabel11, javax.swing.GroupLayout.PREFERRED_SIZE, 62, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(txtFinProyecto, javax.swing.GroupLayout.PREFERRED_SIZE, 95, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                            .addComponent(jLabel10, javax.swing.GroupLayout.PREFERRED_SIZE, 73, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(18, 18, 18)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(btnAgregarProyecto, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(btnEditarProyecto, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(btnActualizarProyecto, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 107, Short.MAX_VALUE)
+                            .addComponent(btnEliminarProyecto, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                 .addGap(21, 21, 21))
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGap(15, 15, 15)
-                .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 504, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -201,13 +445,135 @@ public class VentanaPrincipal extends javax.swing.JFrame {
 
         tabPanel.addTab("Proyectos", jTabbedPane1);
 
+        jLabel12.setText("Nombre:");
+
+        jLabel13.setText("Correo:");
+
+        btnAgregarUsuario.setText("Agregar");
+        btnAgregarUsuario.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnAgregarUsuarioActionPerformed(evt);
+            }
+        });
+
+        btnEditarUsuario.setText("Editar");
+        btnEditarUsuario.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnEditarUsuarioActionPerformed(evt);
+            }
+        });
+
+        btnEliminarUsuario.setText("Eliminar");
+        btnEliminarUsuario.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnEliminarUsuarioActionPerformed(evt);
+            }
+        });
+
+        tablaUsuarios.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null, null},
+                {null, null, null},
+                {null, null, null},
+                {null, null, null}
+            },
+            new String [] {
+                "ID", "Nombre", "Correo"
+            }
+        ));
+        jScrollPane4.setViewportView(tablaUsuarios);
+
+        ActualizarUsuario.setText("Actualizar");
+        ActualizarUsuario.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                ActualizarUsuarioActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
+        jPanel3.setLayout(jPanel3Layout);
+        jPanel3Layout.setHorizontalGroup(
+            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel3Layout.createSequentialGroup()
+                .addGap(16, 16, 16)
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel3Layout.createSequentialGroup()
+                        .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, 540, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(jPanel3Layout.createSequentialGroup()
+                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel12, javax.swing.GroupLayout.PREFERRED_SIZE, 63, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel13, javax.swing.GroupLayout.PREFERRED_SIZE, 43, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(txtCorreoUsuario, javax.swing.GroupLayout.DEFAULT_SIZE, 213, Short.MAX_VALUE)
+                            .addComponent(txtNombreUsuario))
+                        .addGap(87, 87, 87)
+                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(btnEditarUsuario, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(btnAgregarUsuario, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(btnEliminarUsuario, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(ActualizarUsuario, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addGap(113, 113, 113))))
+        );
+        jPanel3Layout.setVerticalGroup(
+            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel3Layout.createSequentialGroup()
+                .addGap(19, 19, 19)
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addGroup(jPanel3Layout.createSequentialGroup()
+                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel12)
+                            .addComponent(txtNombreUsuario, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(21, 21, 21)
+                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel13)
+                            .addComponent(txtCorreoUsuario, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED))
+                    .addGroup(jPanel3Layout.createSequentialGroup()
+                        .addComponent(btnAgregarUsuario)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(btnEditarUsuario)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(ActualizarUsuario)
+                        .addGap(1, 1, 1)))
+                .addComponent(btnEliminarUsuario)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, 267, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
+        jTabbedPane3.addTab("", jPanel3);
+
+        tabPanel.addTab("Usuarios", jTabbedPane3);
+
         btnAgregarTarea.setText("Agregar");
+        btnAgregarTarea.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnAgregarTareaActionPerformed(evt);
+            }
+        });
 
         btnEditarTarea.setText("Editar");
+        btnEditarTarea.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnEditarTareaActionPerformed(evt);
+            }
+        });
 
         btnEliminarTarea.setText("Eliminar");
+        btnEliminarTarea.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnEliminarTareaActionPerformed(evt);
+            }
+        });
 
         btnActualizarTareas.setText("Actualizar");
+        btnActualizarTareas.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnActualizarTareasActionPerformed(evt);
+            }
+        });
 
         jLabel1.setText("Proyecto:");
 
@@ -223,24 +589,33 @@ public class VentanaPrincipal extends javax.swing.JFrame {
 
         jLabel6.setText("Estado:");
 
-        comboEstadoTarea.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        comboEstadoTarea.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Seleccione", "Activo", "Inactivo" }));
 
         tablaTareas.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null}
+                {null, null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null, null}
             },
             new String [] {
-                "Title 1", "Title 2", "Title 3", "Title 4"
+                "ID", "Nombre", "Usuario", "Descripcion", "Proyecto", "Fecha Inicio", "Fecha Fin", "Estado", "Prioridad"
             }
         ));
+        tablaTareas.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                tablaTareasMouseClicked(evt);
+            }
+        });
         jScrollPane2.setViewportView(tablaTareas);
 
         jLabel7.setText("Prioridad:");
 
-        comboPrioridadTarea.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        comboPrioridadTarea.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Seleccione", "Importante", "Intermedio" }));
+
+        jLabel14.setText("Nombre:");
+
+        comboUsuario.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -252,20 +627,9 @@ public class VentanaPrincipal extends javax.swing.JFrame {
                         .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(jPanel2Layout.createSequentialGroup()
                                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 77, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 62, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 62, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addGap(24, 24, 24)
-                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                        .addComponent(comboProyecto, 0, 104, Short.MAX_VALUE)
-                                        .addComponent(txtUsuarioTarea))
-                                    .addComponent(txtDescripcionTarea, javax.swing.GroupLayout.PREFERRED_SIZE, 312, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                            .addGroup(jPanel2Layout.createSequentialGroup()
-                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(jLabel4)
                                     .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 60, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 18, Short.MAX_VALUE)
+                                .addGap(18, 18, 18)
                                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(txtFechaInicioTarea, javax.swing.GroupLayout.PREFERRED_SIZE, 92, javax.swing.GroupLayout.PREFERRED_SIZE)
                                     .addComponent(comboEstadoTarea, javax.swing.GroupLayout.PREFERRED_SIZE, 92, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -280,10 +644,30 @@ public class VentanaPrincipal extends javax.swing.JFrame {
                                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addGroup(jPanel2Layout.createSequentialGroup()
                                         .addGap(6, 6, 6)
-                                        .addComponent(comboPrioridadTarea, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addGap(0, 13, Short.MAX_VALUE))
-                                    .addComponent(txtFechaFinTarea))))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 78, Short.MAX_VALUE)
+                                        .addComponent(comboPrioridadTarea, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                    .addComponent(txtFechaFinTarea)))
+                            .addGroup(jPanel2Layout.createSequentialGroup()
+                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
+                                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 77, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                            .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 62, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                        .addGap(24, 24, 24))
+                                    .addGroup(jPanel2Layout.createSequentialGroup()
+                                        .addComponent(jLabel14, javax.swing.GroupLayout.PREFERRED_SIZE, 62, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 40, Short.MAX_VALUE)))
+                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                    .addComponent(txtDescripcionTarea, javax.swing.GroupLayout.PREFERRED_SIZE, 312, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addGroup(jPanel2Layout.createSequentialGroup()
+                                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                                            .addComponent(comboUsuario, javax.swing.GroupLayout.Alignment.LEADING, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                            .addGroup(jPanel2Layout.createSequentialGroup()
+                                                .addComponent(txtNombreTarea, javax.swing.GroupLayout.PREFERRED_SIZE, 128, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 62, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                        .addComponent(comboProyecto, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE)))))
+                        .addGap(78, 78, 78)
                         .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                             .addComponent(btnActualizarTareas, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(btnEliminarTarea, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -299,13 +683,15 @@ public class VentanaPrincipal extends javax.swing.JFrame {
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(btnAgregarTarea)
                     .addComponent(jLabel1)
-                    .addComponent(comboProyecto, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(comboProyecto, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel14, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(txtNombreTarea, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(btnEditarTarea)
                     .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                         .addComponent(jLabel2)
-                        .addComponent(txtUsuarioTarea, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(comboUsuario, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel2Layout.createSequentialGroup()
@@ -331,88 +717,12 @@ public class VentanaPrincipal extends javax.swing.JFrame {
                         .addComponent(jLabel7)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 201, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(7, Short.MAX_VALUE))
         );
 
         jTabbedPane2.addTab("", jPanel2);
 
         tabPanel.addTab("Tareas", jTabbedPane2);
-
-        jLabel12.setText("Nombre:");
-
-        jLabel13.setText("Correo:");
-
-        btnAgregarUsuario.setText("Agregar");
-
-        btnEditarUsuario.setText("Editar");
-
-        btnEliminarUsuario.setText("Eliminar");
-
-        tablaUsuarios.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-                {null, null, null},
-                {null, null, null},
-                {null, null, null},
-                {null, null, null}
-            },
-            new String [] {
-                "ID", "Nombre", "Correo"
-            }
-        ));
-        jScrollPane4.setViewportView(tablaUsuarios);
-
-        javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
-        jPanel3.setLayout(jPanel3Layout);
-        jPanel3Layout.setHorizontalGroup(
-            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel3Layout.createSequentialGroup()
-                .addGap(16, 16, 16)
-                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel3Layout.createSequentialGroup()
-                        .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, 540, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addGroup(jPanel3Layout.createSequentialGroup()
-                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel12, javax.swing.GroupLayout.PREFERRED_SIZE, 63, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jLabel13, javax.swing.GroupLayout.PREFERRED_SIZE, 43, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(txtCorreoUsuario, javax.swing.GroupLayout.DEFAULT_SIZE, 213, Short.MAX_VALUE)
-                            .addComponent(txtNombreUsuario))
-                        .addGap(87, 87, 87)
-                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(btnEditarUsuario, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(btnAgregarUsuario, javax.swing.GroupLayout.DEFAULT_SIZE, 83, Short.MAX_VALUE)
-                            .addComponent(btnEliminarUsuario, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addGap(113, 113, 113))))
-        );
-        jPanel3Layout.setVerticalGroup(
-            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel3Layout.createSequentialGroup()
-                .addGap(29, 29, 29)
-                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel12)
-                    .addComponent(btnAgregarUsuario)
-                    .addComponent(txtNombreUsuario, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel3Layout.createSequentialGroup()
-                        .addGap(21, 21, 21)
-                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(jLabel13)
-                            .addComponent(txtCorreoUsuario, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                    .addGroup(jPanel3Layout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(btnEditarUsuario)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(btnEliminarUsuario)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, 267, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-
-        jTabbedPane3.addTab("", jPanel3);
-
-        tabPanel.addTab("Usuarios", jTabbedPane3);
 
         getContentPane().add(tabPanel, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, -1, 460));
 
@@ -423,42 +733,330 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         // TODO add your handling code here:
     }//GEN-LAST:event_txtDescripcionProyectoActionPerformed
 
+    private void btnAgregarUsuarioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAgregarUsuarioActionPerformed
+          String nombre = txtNombreUsuario.getText();
+    String correo = txtCorreoUsuario.getText();
+
+    Usuario u = new Usuario();
+    u.setNombre(nombre);
+    u.setCorreo(correo);
+
+    if (servicio.registrarUsuario(u)) {
+        JOptionPane.showMessageDialog(this, "Usuario registrado correctamente.");
+        cargarUsuariosEnTabla();
+        cargarComboUsuario();
+        limpiarCampos();
+    } else {
+        JOptionPane.showMessageDialog(this, "Error al registrar.");
+    }
+    }//GEN-LAST:event_btnAgregarUsuarioActionPerformed
+
+    private void btnEliminarUsuarioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEliminarUsuarioActionPerformed
+        int fila = tablaUsuarios.getSelectedRow();
+    if (fila != -1) {
+        int id = (int) tablaUsuarios.getValueAt(fila, 0);
+        if (servicio.eliminarUsuario(id)) {
+            JOptionPane.showMessageDialog(this, "Usuario eliminado.");
+            cargarUsuariosEnTabla();
+        cargarComboUsuario();
+            limpiarCampos();
+        } else {
+            JOptionPane.showMessageDialog(this, "Error al eliminar.");
+        }
+    } else {
+        JOptionPane.showMessageDialog(this, "Seleccione un usuario.");
+    }
+    }//GEN-LAST:event_btnEliminarUsuarioActionPerformed
+
+    private void btnEditarUsuarioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEditarUsuarioActionPerformed
+       int fila = tablaUsuarios.getSelectedRow();
+    if (fila != -1) {
+        idUsuarioSeleccionado = Integer.parseInt(tablaUsuarios.getValueAt(fila, 0).toString());
+        txtNombreUsuario.setText(tablaUsuarios.getValueAt(fila, 1).toString());
+        txtCorreoUsuario.setText(tablaUsuarios.getValueAt(fila, 2).toString());
+    } else {
+        JOptionPane.showMessageDialog(this, "Selecciona un usuario para editar.");
+    }
+    }//GEN-LAST:event_btnEditarUsuarioActionPerformed
+
+    private void ActualizarUsuarioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ActualizarUsuarioActionPerformed
+    String nombre = txtNombreUsuario.getText().trim();
+    String correo = txtCorreoUsuario.getText().trim();
+
+    if (idUsuarioSeleccionado == -1) {
+        JOptionPane.showMessageDialog(this, "Primero selecciona un usuario para editar.");
+        return;
+    }
+
+    if (nombre.isEmpty() || correo.isEmpty()) {
+        JOptionPane.showMessageDialog(this, "Rellena todos los campos.");
+        return;
+    }
+
+    Usuario u = new Usuario(idUsuarioSeleccionado, nombre, correo);
+    UsuarioServicio servicio = new UsuarioServicio();
+    servicio.actualizarUsuario(u);
+
+    cargarUsuariosEnTabla();
+        cargarComboUsuario(); // vuelve a mostrar los datos
+    limpiarCamposUsuario();
+    idUsuarioSeleccionado = -1;
+    }//GEN-LAST:event_ActualizarUsuarioActionPerformed
+
+    private void btnAgregarTareaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAgregarTareaActionPerformed
+      Tarea t = new Tarea();
+    t.setNombre(txtNombreTarea.getText());
+    t.setDescripcion(txtDescripcionTarea.getText());
+    t.setFechaInicio(txtFechaInicioTarea.getText());
+    t.setFechaFin(txtFechaFinTarea.getText());
+    t.setEstado(comboEstadoTarea.getSelectedItem().toString());
+    t.setPrioridad(comboPrioridadTarea.getSelectedItem().toString());
+
+    // Obtener ID de usuario
+    String nombreUsuario = comboUsuario.getSelectedItem().toString();
+    for (Usuario u : listaUsuarios) {
+        if (u.getNombre().equals(nombreUsuario)) {
+            t.setIdUsuario(u.getId());
+            break;
+        }
+    }
+
+    // Obtener ID de proyecto
+    String nombreProyecto = comboProyecto.getSelectedItem().toString();
+    for (Proyecto p : listaProyectos) {
+        if (p.getNombre().equals(nombreProyecto)) {
+            t.setIdProyecto(p.getId());
+            break;
+        }
+    }
+
+    // Guardar tarea
+    if (tareaServicio.registrarTarea(t)) {
+        JOptionPane.showMessageDialog(this, "Tarea agregada correctamente.");
+        cargarTablaTareas();  // Llama a este método para recargar la tabla
+        limpiarCamposTarea(); // Limpiar los campos
+    } else {
+        JOptionPane.showMessageDialog(this, "Error al agregar tarea.");
+    }
+    }//GEN-LAST:event_btnAgregarTareaActionPerformed
+
+    private void btnEliminarTareaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEliminarTareaActionPerformed
+        int fila = tablaTareas.getSelectedRow();
+    if (fila != -1) {
+        int id = (int) tablaTareas.getValueAt(fila, 0);
+        if (tareaServicio.eliminarTarea(id)) {
+            JOptionPane.showMessageDialog(this, "Tarea eliminada.");
+            cargarUsuariosEnTabla();
+        cargarComboUsuario();
+            limpiarCamposTarea();
+        } else {
+            JOptionPane.showMessageDialog(this, "Error al eliminar tarea.");
+        }
+    } else {
+        JOptionPane.showMessageDialog(this, "Seleccione una tarea.");
+    }
+    }//GEN-LAST:event_btnEliminarTareaActionPerformed
+
+    private void btnEditarTareaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEditarTareaActionPerformed
+     int fila = tablaTareas.getSelectedRow();
+    if (fila != -1) {
+        int id = (int) tablaTareas.getValueAt(fila, 0);
+
+        Tarea t = new Tarea();
+        t.setId(id);
+        t.setNombre(txtNombreTarea.getText());
+        t.setDescripcion(txtDescripcionTarea.getText());
+        t.setFechaInicio(txtFechaInicioTarea.getText());
+        t.setFechaFin(txtFechaFinTarea.getText());
+        t.setEstado(comboEstadoTarea.getSelectedItem().toString());
+        t.setPrioridad(comboPrioridadTarea.getSelectedItem().toString());
+
+        // ID usuario
+        String nombreUsuario = comboUsuario.getSelectedItem().toString();
+        for (Usuario u : listaUsuarios) {
+            if (u.getNombre().equals(nombreUsuario)) {
+                t.setIdUsuario(u.getId());
+                break;
+            }
+        }
+
+        // ID proyecto
+        String nombreProyecto = comboProyecto.getSelectedItem().toString();
+        for (Proyecto p : listaProyectos) {
+            if (p.getNombre().equals(nombreProyecto)) {
+                t.setIdProyecto(p.getId());
+                break;
+            }
+        }
+
+        if (tareaServicio.actualizarTarea(t)) {
+            JOptionPane.showMessageDialog(this, "Tarea actualizada.");
+            cargarUsuariosEnTabla();
+        cargarComboUsuario();
+            limpiarCamposTarea();
+        } else {
+            JOptionPane.showMessageDialog(this, "Error al actualizar tarea.");
+        }
+    } else {
+        JOptionPane.showMessageDialog(this, "Seleccione una tarea.");
+    }
+    }//GEN-LAST:event_btnEditarTareaActionPerformed
+
+    private void btnActualizarTareasActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnActualizarTareasActionPerformed
+           cargarUsuariosEnTabla();
+        cargarComboUsuario();
+           limpiarCamposTarea();
+    }//GEN-LAST:event_btnActualizarTareasActionPerformed
+
+    private void tablaTareasMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tablaTareasMouseClicked
+     int fila = tablaTareas.getSelectedRow();
+
+    if (fila != -1) {
+        // Cargar los campos de texto
+        txtNombreTarea.setText(tablaTareas.getValueAt(fila, 1).toString());
+        txtDescripcionTarea.setText(tablaTareas.getValueAt(fila, 2).toString());
+        txtFechaInicioTarea.setText(tablaTareas.getValueAt(fila, 3).toString());
+        txtFechaFinTarea.setText(tablaTareas.getValueAt(fila, 4).toString());
+        
+        // Leer los valores de Prioridad y Estado directamente desde la tabla
+        int prioridadSeleccionada = Integer.parseInt(tablaTareas.getValueAt(fila, 6).toString());  // Columna de Prioridad
+        int estadoSeleccionado = Integer.parseInt(tablaTareas.getValueAt(fila, 5).toString());     // Columna de Estado
+        
+        // Seleccionar el valor en los ComboBox
+        comboPrioridadTarea.setSelectedIndex(prioridadSeleccionada);
+        comboEstadoTarea.setSelectedIndex(estadoSeleccionado);
+
+        // ID de proyecto y usuario desde la tabla
+        int idProyectoTabla = Integer.parseInt(tablaTareas.getValueAt(fila, 7).toString());
+        int idUsuarioTabla = Integer.parseInt(tablaTareas.getValueAt(fila, 8).toString());
+
+        // Buscar el nombre de ese proyecto en la lista y seleccionarlo en el combo
+        for (Proyecto p : listaProyectos) {
+            if (p.getId() == idProyectoTabla) {
+                comboProyecto.setSelectedItem(p.getNombre());
+                break;
+            }
+        }
+
+        // Buscar el nombre del usuario y seleccionarlo en el combo
+        for (Usuario u : listaUsuarios) {
+            if (u.getId() == idUsuarioTabla) {
+                comboUsuario.setSelectedItem(u.getNombre());
+                break;
+            }
+        }
+    }
+    }//GEN-LAST:event_tablaTareasMouseClicked
+
+    private void btnAgregarProyectoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAgregarProyectoActionPerformed
+    if (!validarCamposProyecto()) {
+           return; // no continua si hay error
+       }
+
+       Proyecto p = new Proyecto();
+       p.setNombre(txtNombreProyecto.getText());
+       p.setDescripcion(txtDescripcionProyecto.getText());
+       p.setFechaInicio(txtInicioProyecto.getText());
+       p.setFechaFin(txtFinProyecto.getText());
+
+       ProyectoServicio servicio = new ProyectoServicio();
+       if (servicio.registrarProyecto(p)) {
+           JOptionPane.showMessageDialog(this, "Proyecto registrado correctamente.");
+           cargarProyectosEnTabla();
+        cargarComboProyecto();
+           limpiarCamposProyecto();
+       } else {
+           JOptionPane.showMessageDialog(this, "Error al registrar proyecto.");
+       }
+    }//GEN-LAST:event_btnAgregarProyectoActionPerformed
+
+    private void btnEditarProyectoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEditarProyectoActionPerformed
+       if (filaSeleccionada != -1) {
+        txtNombreProyecto.setText(tablaProyectos.getValueAt(filaSeleccionada, 1).toString());
+        txtDescripcionProyecto.setText(tablaProyectos.getValueAt(filaSeleccionada, 2).toString());
+        txtInicioProyecto.setText(tablaProyectos.getValueAt(filaSeleccionada, 3).toString());
+        txtFinProyecto.setText(tablaProyectos.getValueAt(filaSeleccionada, 4).toString());
+    } else {
+        JOptionPane.showMessageDialog(this, "Seleccione un proyecto de la tabla primero.");
+    }
+    }//GEN-LAST:event_btnEditarProyectoActionPerformed
+
+    private void btnEliminarProyectoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEliminarProyectoActionPerformed
+        int fila = tablaProyectos.getSelectedRow();
+    if (fila != -1) {
+        int id = (int) tablaProyectos.getValueAt(fila, 0);
+
+        ProyectoServicio servicio = new ProyectoServicio();
+        if (servicio.eliminarProyecto(id)) {
+            JOptionPane.showMessageDialog(this, "Proyecto eliminado.");
+            cargarProyectosEnTabla();
+        cargarComboProyecto();
+            limpiarCamposProyecto();
+        } else {
+            JOptionPane.showMessageDialog(this, "Error al eliminar proyecto.");
+        }
+    } else {
+        JOptionPane.showMessageDialog(this, "Seleccione un proyecto.");
+    }
+    }//GEN-LAST:event_btnEliminarProyectoActionPerformed
+
+    private void btnActualizarProyectoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnActualizarProyectoActionPerformed
+         // Validar si los campos no están vacíos
+    if (txtNombreTarea.getText().trim().isEmpty() || txtDescripcionTarea.getText().trim().isEmpty()) {
+        JOptionPane.showMessageDialog(this, "Por favor, completa todos los campos.");
+        return;
+    }
+
+    // Crear un nuevo objeto Tarea con los datos de los campos
+    Tarea t = new Tarea();
+    t.setId(Integer.parseInt(tablaTareas.getValueAt(tablaTareas.getSelectedRow(), 0).toString()));  // ID de la tarea
+    t.setNombre(txtNombreTarea.getText());
+    t.setDescripcion(txtDescripcionTarea.getText());
+    t.setFechaInicio(txtFechaInicioTarea.getText());
+    t.setFechaFin(txtFechaFinTarea.getText());
+    t.setEstado(comboEstadoTarea.getSelectedItem().toString());
+    t.setPrioridad(comboPrioridadTarea.getSelectedItem().toString());
+
+    // Obtener ID de Usuario
+    String nombreUsuario = comboUsuario.getSelectedItem().toString();
+    for (Usuario u : listaUsuarios) {
+        if (u.getNombre().equals(nombreUsuario)) {
+            t.setIdUsuario(u.getId());
+            break;
+        }
+    }
+
+    // Obtener ID de Proyecto
+    String nombreProyecto = comboProyecto.getSelectedItem().toString();
+    for (Proyecto p : listaProyectos) {
+        if (p.getNombre().equals(nombreProyecto)) {
+            t.setIdProyecto(p.getId());
+            break;
+        }
+    }
+
+    // Actualizar tarea
+    TareaServicio servicio = new TareaServicio();
+    if (servicio.actualizarTarea(t)) {
+        JOptionPane.showMessageDialog(this, "Tarea actualizada correctamente.");
+        cargarTablaTareas();  // Recargar la tabla de tareas
+        limpiarCamposTarea(); // Limpiar los campos
+    } else {
+        JOptionPane.showMessageDialog(this, "Error al actualizar la tarea.");
+    }
+    }//GEN-LAST:event_btnActualizarProyectoActionPerformed
+
+    private void tablaProyectosMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tablaProyectosMouseClicked
+    filaSeleccionada = tablaProyectos.getSelectedRow();
+    }//GEN-LAST:event_tablaProyectosMouseClicked
+
     /**
      * @param args the command line arguments
      */
-    public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
-        try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(VentanaPrincipal.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(VentanaPrincipal.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(VentanaPrincipal.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(VentanaPrincipal.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        }
-        //</editor-fold>
 
-        /* Create and display the form */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new VentanaPrincipal().setVisible(true);
-            }
-        });
-    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton ActualizarUsuario;
     private javax.swing.JButton btnActualizarProyecto;
     private javax.swing.JButton btnActualizarTareas;
     private javax.swing.JButton btnAgregarProyecto;
@@ -473,11 +1071,13 @@ public class VentanaPrincipal extends javax.swing.JFrame {
     private javax.swing.JComboBox<String> comboEstadoTarea;
     private javax.swing.JComboBox<String> comboPrioridadTarea;
     private javax.swing.JComboBox<String> comboProyecto;
+    private javax.swing.JComboBox<String> comboUsuario;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
     private javax.swing.JLabel jLabel12;
     private javax.swing.JLabel jLabel13;
+    private javax.swing.JLabel jLabel14;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
@@ -509,7 +1109,8 @@ public class VentanaPrincipal extends javax.swing.JFrame {
     private javax.swing.JTextField txtFinProyecto;
     private javax.swing.JTextField txtInicioProyecto;
     private javax.swing.JTextField txtNombreProyecto;
+    private javax.swing.JTextField txtNombreTarea;
     private javax.swing.JTextField txtNombreUsuario;
-    private javax.swing.JTextField txtUsuarioTarea;
     // End of variables declaration//GEN-END:variables
+
 }

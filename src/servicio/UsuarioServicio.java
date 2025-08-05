@@ -21,6 +21,10 @@ public class UsuarioServicio {
         }
         return dao.agregarUsuario(u);
     }
+    
+    public Usuario obtenerUsuarioPorId(int id) {
+        return dao.obtenerUsuarioPorId(id);  // Suponiendo que tienes este método en UsuarioDAO
+    }
 
     public boolean actualizarUsuario(Usuario u) {
         return dao.actualizarUsuario(u);
@@ -33,4 +37,6 @@ public class UsuarioServicio {
     public List<Usuario> listarUsuarios() {
         return dao.listarUsuarios();
     }
+    
+    
 }

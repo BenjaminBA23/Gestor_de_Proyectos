@@ -4,13 +4,16 @@
  */
 package modelo;
 
+import servicio.ProyectoServicio;
+import servicio.UsuarioServicio;
+
 /**
  *
  * @author Ben
  */
 public class Tarea {
     private int id;
-    private String nombre;
+    private String nombreUsuario;
     private String descripcion;
     private String fechaInicio;
     private String fechaFin;
@@ -18,13 +21,17 @@ public class Tarea {
     private String prioridad;
     private int idProyecto;
     private int idUsuario;
+    
+    // Estos atributos te ayudarán a evitar las consultas repetidas
+    private Usuario usuario;
+    private Proyecto proyecto;
 
     public Tarea() {}
 
     public Tarea(int id, String nombre, String descripcion, String fechaInicio, String fechaFin,
                  String estado, String prioridad, int idProyecto, int idUsuario) {
         this.id = id;
-        this.nombre = nombre;
+        this.nombreUsuario = nombre;
         this.descripcion = descripcion;
         this.fechaInicio = fechaInicio;
         this.fechaFin = fechaFin;
@@ -32,14 +39,26 @@ public class Tarea {
         this.prioridad = prioridad;
         this.idProyecto = idProyecto;
         this.idUsuario = idUsuario;
+        
+        // Carga los objetos completos de Usuario y Proyecto
+        this.usuario = new UsuarioServicio().obtenerUsuarioPorId(idUsuario);  // Esto es eficiente solo si lo haces una vez
+        this.proyecto = new ProyectoServicio().obtenerProyectoPorId(idProyecto);  // Igual aquí
+    }
+
+    public String getUsuarioNombre() {
+        return usuario != null ? usuario.getNombre() : "Desconocido";
+    }
+
+    public String getProyectoNombre() {
+        return proyecto != null ? proyecto.getNombre() : "Desconocido";
     }
 
     // Getters y setters
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
 
-    public String getNombre() { return nombre; }
-    public void setNombre(String nombre) { this.nombre = nombre; }
+    public String getNombre() { return nombreUsuario; }
+    public void setNombre(String nombre) { this.nombreUsuario = nombre; }
 
     public String getDescripcion() { return descripcion; }
     public void setDescripcion(String descripcion) { this.descripcion = descripcion; }

@@ -22,6 +22,9 @@ public class ProyectoServicio {
         }
         return dao.agregarProyecto(p);
     }
+    public Proyecto obtenerProyectoPorId(int id) {
+        return dao.obtenerProyectoPorId(id);  // Suponiendo que tienes este método en ProyectoDAO
+    }
 
     public boolean actualizarProyecto(Proyecto p) {
         return dao.actualizarProyecto(p);

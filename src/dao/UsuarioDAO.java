@@ -14,81 +14,97 @@ import java.util.List;
  * @author Ben
  */
 public class UsuarioDAO {
+    private Connection connection;
 
-    // Listar todos los usuarios
+    // Constructor que establece la conexión a la base de datos
+    public UsuarioDAO() {
+        connection = ConexionDB.conectar();  // Suponiendo que tienes esta clase de conexión
+    }
+
+    // Método para obtener un usuario por su ID
+    public Usuario obtenerUsuarioPorId(int id) {
+        Usuario u = null;
+        try {
+            // Consulta SQL para obtener un usuario por su ID
+            String query = "SELECT * FROM usuarios WHERE id = ?";
+            PreparedStatement pst = connection.prepareStatement(query);
+            pst.setInt(1, id);  // Establece el ID en el parámetro de la consulta
+            ResultSet rs = pst.executeQuery();
+            
+            if (rs.next()) {
+                // Crea un objeto Usuario con los datos obtenidos de la base de datos
+                u = new Usuario(rs.getInt("id"), rs.getString("nombre"), rs.getString("correo"));
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();  // Maneja posibles errores de la consulta
+        }
+        return u;
+    }
+
+    // Método para agregar un usuario
+    public boolean agregarUsuario(Usuario u) {
+        try {
+            String query = "INSERT INTO usuarios (nombre, correo) VALUES (?, ?)";
+            PreparedStatement pst = connection.prepareStatement(query);
+            pst.setString(1, u.getNombre());
+            pst.setString(2, u.getCorreo());
+            
+            int filasInsertadas = pst.executeUpdate();  // Ejecuta la inserción
+            return filasInsertadas > 0;  // Si se insertaron filas, devuelve true
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            return false;
+        }
+    }
+
+    // Método para actualizar un usuario
+    public boolean actualizarUsuario(Usuario u) {
+        try {
+            String query = "UPDATE usuarios SET nombre = ?, correo = ? WHERE id = ?";
+            PreparedStatement pst = connection.prepareStatement(query);
+            pst.setString(1, u.getNombre());
+            pst.setString(2, u.getCorreo());
+            pst.setInt(3, u.getId());
+            
+            int filasActualizadas = pst.executeUpdate();  // Ejecuta la actualización
+            return filasActualizadas > 0;  // Si se actualizó la fila, devuelve true
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            return false;
+        }
+    }
+
+    // Método para eliminar un usuario
+    public boolean eliminarUsuario(int id) {
+        try {
+            String query = "DELETE FROM usuarios WHERE id = ?";
+            PreparedStatement pst = connection.prepareStatement(query);
+            pst.setInt(1, id);  // Establece el ID del usuario a eliminar
+            
+            int filasEliminadas = pst.executeUpdate();  // Ejecuta la eliminación
+            return filasEliminadas > 0;  // Si se eliminaron filas, devuelve true
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            return false;
+        }
+    }
+
+    // Método para listar todos los usuarios
     public List<Usuario> listarUsuarios() {
         List<Usuario> lista = new ArrayList<>();
-        String sql = "SELECT * FROM usuarios";
-
-        try (Connection con = ConexionDB.conectar();
-             PreparedStatement ps = con.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-
+        try {
+            String query = "SELECT * FROM usuarios";
+            PreparedStatement pst = connection.prepareStatement(query);
+            ResultSet rs = pst.executeQuery();
+            
             while (rs.next()) {
-                Usuario u = new Usuario();
-                u.setId(rs.getInt("id"));
-                u.setNombre(rs.getString("nombre"));
-                u.setCorreo(rs.getString("correo"));
+                // Crea un nuevo objeto Usuario y lo agrega a la lista
+                Usuario u = new Usuario(rs.getInt("id"), rs.getString("nombre"), rs.getString("correo"));
                 lista.add(u);
             }
-
-        } catch (SQLException e) {
-            e.printStackTrace();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
         }
-
-        return lista;
-    }
-
-    // Agregar un nuevo usuario
-    public boolean agregarUsuario(Usuario u) {
-        String sql = "INSERT INTO usuarios (nombre, correo) VALUES (?, ?)";
-
-        try (Connection con = ConexionDB.conectar();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-
-            ps.setString(1, u.getNombre());
-            ps.setString(2, u.getCorreo());
-
-            return ps.executeUpdate() > 0;
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-    // Actualizar usuario
-    public boolean actualizarUsuario(Usuario u) {
-        String sql = "UPDATE usuarios SET nombre = ?, correo = ? WHERE id = ?";
-
-        try (Connection con = ConexionDB.conectar();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-
-            ps.setString(1, u.getNombre());
-            ps.setString(2, u.getCorreo());
-            ps.setInt(3, u.getId());
-
-            return ps.executeUpdate() > 0;
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-    // Eliminar usuario
-    public boolean eliminarUsuario(int id) {
-        String sql = "DELETE FROM usuarios WHERE id = ?";
-
-        try (Connection con = ConexionDB.conectar();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-
-            ps.setInt(1, id);
-            return ps.executeUpdate() > 0;
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
+        return lista;  // Devuelve la lista de usuarios
     }
 }
